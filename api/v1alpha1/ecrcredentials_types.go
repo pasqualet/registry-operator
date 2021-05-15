@@ -26,13 +26,13 @@ import (
 // ECRCredentialsSpec defines the desired state of ECRCredentials
 type ECRCredentialsSpec struct {
 	//+kubebuilder:validation:Required
-	AWSAccessKeyID string `json:"aws_access_key_id"`
+	AccessKeyID string `json:"accessKeyId"`
 
 	//+kubebuilder:validation:Required
-	AWSSecretAccessKey string `json:"aws_secret_access_key"`
+	SecretAccessKey string `json:"secretAccessKey"`
 
 	//+kubebuilder:validation:Required
-	AWSRegion string `json:"aws_region"`
+	Region string `json:"region"`
 }
 
 // ECRCredentialsStatus defines the observed state of ECRCredentials

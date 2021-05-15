@@ -141,12 +141,12 @@ func (r *ECRCredentialsReconciler) setStatus(log logr.Logger, ecrCredentials *re
 
 func (r *ECRCredentialsReconciler) getToken(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials) (*RegistryCredentials, error) {
 	credentials := credentials.NewStaticCredentialsFromCreds(credentials.Value{
-		AccessKeyID:     ecrCredentials.Spec.AWSAccessKeyID,
-		SecretAccessKey: ecrCredentials.Spec.AWSSecretAccessKey,
+		AccessKeyID:     ecrCredentials.Spec.AccessKeyID,
+		SecretAccessKey: ecrCredentials.Spec.SecretAccessKey,
 	})
 	awsConfig := &aws.Config{
 		Credentials: credentials,
-		Region:      aws.String(ecrCredentials.Spec.AWSRegion),
+		Region:      aws.String(ecrCredentials.Spec.Region),
 	}
 	awsSession := session.New(awsConfig)
 
@@ -170,7 +170,7 @@ func (r *ECRCredentialsReconciler) getToken(log logr.Logger, ecrCredentials *reg
 		log.Error(err, "Unable to get CallerIdentity")
 	}
 
-	host := fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com", *identity.Account, ecrCredentials.Spec.AWSRegion)
+	host := fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com", *identity.Account, ecrCredentials.Spec.Region)
 	return &RegistryCredentials{
 		Name:               ecrCredentials.ObjectMeta.Name,
 		Namespace:          ecrCredentials.ObjectMeta.Namespace,
