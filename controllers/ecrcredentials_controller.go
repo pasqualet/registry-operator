@@ -33,7 +33,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	registryv1alpha1 "github.com/astrokube/registry-controller/api/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -78,33 +77,14 @@ func (r *ECRCredentialsReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	// ecrCredentials is not going to be deleted
 	if ecrCredentials.ObjectMeta.DeletionTimestamp.IsZero() {
 
-		// If Provisioning status if is not set
+		// If Authenticating status if is not set
 		if ecrCredentials.Status.Phase == "" {
-			if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsProvisioning); err != nil {
+			if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsAuthenticating); err != nil {
 				return ctrl.Result{}, err
 			}
 		}
 
-		credentials, err := r.getToken(log, ecrCredentials)
-		if err != nil {
-			log.Error(err, "Unable to get token")
-			return ctrl.Result{}, err
-		}
-
-		secret := r.getSecret(*credentials)
-		log.Info(string(secret.Data[corev1.DockerConfigKey]))
-
-		err = r.createOrUpdateSecret(log, &secret)
-		if err != nil {
-			log.Error(err, "Unable to create secret")
-			return ctrl.Result{}, err
-		}
-
-		// Set Active status
-		if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsActive); err != nil {
-			return ctrl.Result{}, err
-		}
-
+		return r.authenticate(log, ecrCredentials)
 	} else {
 		// Set Terminating status
 		if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsTerminating); err != nil {
@@ -113,10 +93,6 @@ func (r *ECRCredentialsReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 		return ctrl.Result{}, nil
 	}
-
-	log.Info("Reconciled successfully")
-
-	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -126,11 +102,73 @@ func (r *ECRCredentialsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
-func (r *ECRCredentialsReconciler) setStatus(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials, phase registryv1alpha1.ECRCredentialsPhase) error {
+func (r *ECRCredentialsReconciler) authenticate(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials) (ctrl.Result, error) {
+	awsSession, err := r.getAwsSession(log, ecrCredentials)
+	if err != nil {
+		// Set Error status
+		if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsError); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		// Set ErrorMessage
+		if err := r.setErrorMessage(log, ecrCredentials, err.Error()); err != nil {
+			return ctrl.Result{}, nil
+		}
+	}
+
+	credentials, err := r.getToken(log, ecrCredentials, awsSession)
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case "UnrecognizedClientException":
+				// Set Error status
+				if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsUnauthorized); err != nil {
+					return ctrl.Result{}, err
+				}
+			default:
+				// Set Error status
+				if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsError); err != nil {
+					return ctrl.Result{}, err
+				}
+			}
+		}
+
+		// Set ErrorMessage
+		if err := r.setErrorMessage(log, ecrCredentials, err.Error()); err != nil {
+			return ctrl.Result{}, nil
+		}
+
+		return ctrl.Result{}, nil
+	}
+
+	secret := r.getSecret(*credentials)
+
+	err = r.createOrUpdateSecret(log, &secret)
+	if err != nil {
+		// Set ErrorMessage
+		if err := r.setErrorMessage(log, ecrCredentials, err.Error()); err != nil {
+			return ctrl.Result{}, nil
+		}
+		// Set Error status
+		if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsError); err != nil {
+			return ctrl.Result{}, err
+		}
+
+		return ctrl.Result{}, nil
+	}
+
+	// Set Authenticated status
+	if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsAuthenticated); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return ctrl.Result{}, nil
+}
+
+func (r *ECRCredentialsReconciler) setErrorMessage(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials, message string) error {
 	ctx := context.Background()
 
-	ecrCredentials.Status.Phase = phase
-	log.Info(fmt.Sprintf("Setting status to %v", ecrCredentials.Status.Phase))
+	ecrCredentials.Status.ErrorMessage = message
 	if err := r.Status().Update(ctx, ecrCredentials); err != nil {
 		log.Error(err, "Unable to set status")
 		return err
@@ -139,7 +177,19 @@ func (r *ECRCredentialsReconciler) setStatus(log logr.Logger, ecrCredentials *re
 	return nil
 }
 
-func (r *ECRCredentialsReconciler) getToken(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials) (*RegistryCredentials, error) {
+func (r *ECRCredentialsReconciler) setStatus(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials, phase registryv1alpha1.ECRCredentialsPhase) error {
+	ctx := context.Background()
+
+	ecrCredentials.Status.Phase = phase
+	if err := r.Status().Update(ctx, ecrCredentials); err != nil {
+		log.Error(err, "Unable to set status")
+		return err
+	}
+
+	return nil
+}
+
+func (r *ECRCredentialsReconciler) getAwsSession(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials) (*session.Session, error) {
 	credentials := credentials.NewStaticCredentialsFromCreds(credentials.Value{
 		AccessKeyID:     ecrCredentials.Spec.AccessKeyID,
 		SecretAccessKey: ecrCredentials.Spec.SecretAccessKey,
@@ -148,26 +198,24 @@ func (r *ECRCredentialsReconciler) getToken(log logr.Logger, ecrCredentials *reg
 		Credentials: credentials,
 		Region:      aws.String(ecrCredentials.Spec.Region),
 	}
-	awsSession := session.New(awsConfig)
+	return session.NewSession(awsConfig)
+}
 
+func (r *ECRCredentialsReconciler) getToken(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials, awsSession *session.Session) (*RegistryCredentials, error) {
 	svc := ecr.New(awsSession)
 	input := &ecr.GetAuthorizationTokenInput{}
 
 	result, err := svc.GetAuthorizationToken(input)
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			log.Error(aerr, "Unable to get authorization token")
-			return nil, aerr
-		} else {
-			log.Error(err, "Unable to get authorization token")
-			return nil, err
-		}
+		log.Info("Unable to get authorization token")
+		return nil, err
 	}
 
 	stsSvc := sts.New(awsSession)
 	identity, err := stsSvc.GetCallerIdentity(&sts.GetCallerIdentityInput{})
 	if err != nil {
-		log.Error(err, "Unable to get CallerIdentity")
+		log.Info("Unable to get CallerIdentity")
+		return nil, err
 	}
 
 	host := fmt.Sprintf("%s.dkr.ecr.%s.amazonaws.com", *identity.Account, ecrCredentials.Spec.Region)
