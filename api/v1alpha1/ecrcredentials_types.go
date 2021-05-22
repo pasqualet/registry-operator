@@ -33,20 +33,28 @@ type ECRCredentialsSpec struct {
 
 	//+kubebuilder:validation:Required
 	Region string `json:"region"`
+
+	//+kubebuilder:validation:Optional
+	ImageSelector []string `json:"imageSelector,omitempty"`
 }
 
 // ECRCredentialsStatus defines the observed state of ECRCredentials
 type ECRCredentialsStatus struct {
 	//+kubebuilder:validation:Optional
 	Phase ECRCredentialsPhase `json:"phase,omitempty"`
+
+	//+kubebuilder:validation:Optional
+	ErrorMessage string `json:"errorMessage,omitempty"`
 }
 
 type ECRCredentialsPhase string
 
 var (
-	ECRCredentialsProvisioning ECRCredentialsPhase = "Provisioning"
-	ECRCredentialsActive       ECRCredentialsPhase = "Active"
-	ECRCredentialsTerminating  ECRCredentialsPhase = "Terminanting"
+	ECRCredentialsAuthenticating ECRCredentialsPhase = "Authenticating"
+	ECRCredentialsUnauthorized   ECRCredentialsPhase = "Unauthorized"
+	ECRCredentialsError          ECRCredentialsPhase = "Error"
+	ECRCredentialsAuthenticated  ECRCredentialsPhase = "Authenticated"
+	ECRCredentialsTerminating    ECRCredentialsPhase = "Terminanting"
 )
 
 //+kubebuilder:object:root=true
