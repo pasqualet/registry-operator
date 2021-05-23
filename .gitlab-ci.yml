@@ -35,3 +35,17 @@ build:
     - make docker-build
     - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     - make docker-push
+
+build_docs:
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_HOST: tcp://docker:2375
+  services:
+    - docker:dind
+  stage: build
+  script:
+    - install_kubebuilder
+    - install_docker
+    - make docs-docker-build
+    - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+    - make docs-docker-push

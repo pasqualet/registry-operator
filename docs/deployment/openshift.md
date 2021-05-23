@@ -2,6 +2,6 @@
 
 ## OC
 
-```bash
+```sh
 oc apply -f https://...
 ```

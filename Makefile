@@ -1,6 +1,11 @@
 
 # Image URL to use all building/pushing image targets
-IMG ?= astrokube/registry-controller:0.6.5
+REPO ?= astrokube/registry-controller
+REPO_DOCS ?= astrokube/registry-controller-docs
+VERSION ?= 0.6.5
+IMG=$(REPO):$(VERSION)
+IMG_DOCS=$(REPO_DOCS):$(VERSION)
+
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 
@@ -57,6 +62,21 @@ test: manifests generate fmt vet ## Run tests.
 
 e2e: 
 	go test ./test/e2e/... -count 1 -v
+
+##@ Docs
+
+docs-docker-build:
+	cd docs && docker build -t $(IMG_DOCS) .
+
+docs-docker-push:
+	docker push $(IMG_DOCS)
+
+docs-docker-run:
+	docker run --rm -it -p 3000:3000 -v $(shell pwd)/docs:/docs $(IMG_DOCS)
+
+docs-run:
+	docsify serve ./docs
+
 ##@ Build
 
 build: generate fmt vet ## Build manager binary.

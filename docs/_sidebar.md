@@ -2,7 +2,6 @@
 
 - Getting started
   - [Introduction](getting-started/introduction.md)
-  - [Architecture](getting-started/architecture.md)
 - Deployment
   - [Kubernetes](deployment/kubernetes.md)
   - [OpenShift](deployment/openshift.md)

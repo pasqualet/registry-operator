@@ -4,20 +4,37 @@ The Registry Operator can be deployed in any Kubernetes distribution.
 
 ## Kubectl
 
-```bash
-kubectl apply -f https://...
-```
+### Prerequisites
+
+- A Kubernetes cluster
+- kubectl installed installed in your machine
+
+### Procedure
+
+1. Apply the YAML manifests from the Github repository:
+
+    ```sh
+    kubectl apply -f https://...
+    ```
 
 ## Helm
 
-Add the Helm Repository:
+### Prerequisites
 
-```bash
-helm repo add astrokube ...
-```
+- A Kubernetes cluster
+- kubectl installed installed in your machine
+- Helm client installed in your machine
 
-Install the Chart:
+### Procedure
 
-```bash
-helm install registry-operator astrokube/registry-operator
-```
+1. Add the Helm Repository:
+
+    ```sh
+    helm repo add astrokube ...
+    ```
+
+2. Install the Chart:
+
+    ```sh
+    helm install registry-operator astrokube/registry-operator
+    ```
