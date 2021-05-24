@@ -1,13 +1,11 @@
-# AWS ECR
-
-## Integrate AWS ECR
+# Integrate AWS ECR
 
 You can integrate AWS ECR in a single Namespace by creating an ECRCredentials object.
 
 
-### Prerequisites
+## Prerequisites
 
-- You have already created an AWS Access Key with Read access level to Elastic Container Registry. Check the [IAM Policy details](/user-guide/aws-ecr?id=aws-iam-policy).
+- You have already created an AWS Access Key with Read access level to Elastic Container Registry. Check the [IAM Policy details](aws-ecr-policy.md).
 
 ### Procedure
 
@@ -60,47 +58,3 @@ You can integrate AWS ECR in a single Namespace by creating an ECRCredentials ob
     NAME     TYPE                             DATA   AGE
     sample   kubernetes.io/dockerconfigjson   1      5s
     ```
-
-## ECRCredentials
-
-Example:
-
-```yaml
-apiVersion: registry.astrokube.com/v1alpha1
-kind: ECRCredentials
-metadata:
-  name: sample
-spec:
-  accessKeyId: XXXXXXXXXXXXXXXXXXXX
-  secretAccessKey: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  region: eu-central-1
-  imageSelector:
-    - 921780870478.dkr.ecr.eu-central-1.amazonaws.com/myimage:.*
-```
-
-## AWS IAM Policy
-
-The AWS Access Key provided in the ECRCredentials objects require the following IAM Policy:
-
-```json
-{
-    "Statement": [
-        {
-            "Action": [
-                "ecr:BatchCheckLayerAvailability",
-                "ecr:BatchGetImage",
-                "ecr:DescribeImages",
-                "ecr:DescribeRepositories",
-                "ecr:GetAuthorizationToken",
-                "ecr:GetDownloadUrlForLayer",
-                "ecr:ListImages"
-            ],
-            "Effect": "Allow",
-            "Resource": [
-                "*"
-            ]
-        }
-    ],
-    "Version": "2012-10-17"
-}
-```
