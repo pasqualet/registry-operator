@@ -100,16 +100,6 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "ECRCredentials")
 		os.Exit(1)
 	}
-	if err = (&controllers.DockerioCredentialsReconciler{
-		CredentialsReconciler: credentialsReconciler,
-		Client:                mgr.GetClient(),
-		Log:                   ctrl.Log.WithName("controllers").WithName("DockerioCredentials"),
-		Recorder:              mgr.GetEventRecorderFor("dockerio-credentials-controller"),
-		Scheme:                mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "DockerioCredentials")
-		os.Exit(1)
-	}
 
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		setupLog.Info("set up webhook")

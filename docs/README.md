@@ -10,5 +10,4 @@ The core feature of the Registry Controller is to manage the DockerConfig creden
 
 Those are the implemented CRD:
 
-* DockerioCredentials: an object to store the DockerConfig credentials for Docker Hub.
 * ECRCredentials: an object to store the DockerConfig credentials for AWS ECR.
