@@ -72,7 +72,7 @@ var _ = Describe("EcrCredentials controller", func() {
 					Namespace: namespace,
 				}, fetched)
 				return fetched.Status.Phase
-			}, timeout, interval).Should(Equal(registryv1alpha1.ECRCredentialsError))
+			}, timeout, interval).Should(Equal(registryv1alpha1.ECRCredentialsUnauthorized))
 		})
 
 		if os.Getenv("ENABLE_ALL_TESTS") == "true" {

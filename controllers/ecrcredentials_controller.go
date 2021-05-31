@@ -105,37 +105,15 @@ func (r *ECRCredentialsReconciler) SetupWithManager(mgr ctrl.Manager) error {
 func (r *ECRCredentialsReconciler) authenticate(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials) (ctrl.Result, error) {
 	awsSession, err := r.getAwsSession(log, ecrCredentials)
 	if err != nil {
-		// Set Error status
-		if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsError); err != nil {
+		if err := r.setError(log, ecrCredentials, err); err != nil {
 			return ctrl.Result{}, err
-		}
-
-		// Set ErrorMessage
-		if err := r.setErrorMessage(log, ecrCredentials, err.Error()); err != nil {
-			return ctrl.Result{}, nil
 		}
 	}
 
 	credentials, err := r.getToken(log, ecrCredentials, awsSession)
 	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			case "UnrecognizedClientException":
-				// Set Error status
-				if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsUnauthorized); err != nil {
-					return ctrl.Result{}, err
-				}
-			default:
-				// Set Error status
-				if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsError); err != nil {
-					return ctrl.Result{}, err
-				}
-			}
-		}
-
-		// Set ErrorMessage
-		if err := r.setErrorMessage(log, ecrCredentials, err.Error()); err != nil {
-			return ctrl.Result{}, nil
+		if err := r.setError(log, ecrCredentials, err); err != nil {
+			return ctrl.Result{}, err
 		}
 
 		return ctrl.Result{}, nil
@@ -145,12 +123,7 @@ func (r *ECRCredentialsReconciler) authenticate(log logr.Logger, ecrCredentials 
 
 	err = r.createOrUpdateSecret(log, &secret)
 	if err != nil {
-		// Set ErrorMessage
-		if err := r.setErrorMessage(log, ecrCredentials, err.Error()); err != nil {
-			return ctrl.Result{}, nil
-		}
-		// Set Error status
-		if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsError); err != nil {
+		if err := r.setError(log, ecrCredentials, err); err != nil {
 			return ctrl.Result{}, err
 		}
 
@@ -163,6 +136,30 @@ func (r *ECRCredentialsReconciler) authenticate(log logr.Logger, ecrCredentials 
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *ECRCredentialsReconciler) setError(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials, err error) error {
+	if aerr, ok := err.(awserr.Error); ok {
+		switch aerr.Code() {
+		case "UnrecognizedClientException":
+			// Set Error status
+			if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsUnauthorized); err != nil {
+				return err
+			}
+		default:
+			// Set Error status
+			if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsError); err != nil {
+				return err
+			}
+		}
+	}
+
+	// Set ErrorMessage
+	if err := r.setErrorMessage(log, ecrCredentials, err.Error()); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *ECRCredentialsReconciler) setErrorMessage(log logr.Logger, ecrCredentials *registryv1alpha1.ECRCredentials, message string) error {
