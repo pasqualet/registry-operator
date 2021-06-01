@@ -16,4 +16,13 @@ resources:
   webhooks:
     validation: true
     webhookVersion: v1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: astrokube.com
+  group: registry
+  kind: RegistryCredentials
+  path: github.com/astrokube/registry-controller/api/v1alpha1
+  version: v1alpha1
 version: "3"

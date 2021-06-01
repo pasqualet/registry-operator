@@ -56,3 +56,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - registry.astrokube.com
+  resources:
+  - registrycredentials
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - registry.astrokube.com
+  resources:
+  - registrycredentials/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - registry.astrokube.com
+  resources:
+  - registrycredentials/status
+  verbs:
+  - get
+  - patch
+  - update
