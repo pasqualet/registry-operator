@@ -2,7 +2,7 @@
 # Image URL to use all building/pushing image targets
 REPO ?= astrokube/registry-controller
 REPO_DOCS ?= astrokube/registry-controller-docs
-VERSION ?= 0.7.0
+VERSION ?= 0.7.1
 IMG=$(REPO):$(VERSION)
 IMG_DOCS=$(REPO_DOCS):$(VERSION)
 

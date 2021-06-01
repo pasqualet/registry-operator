@@ -15,7 +15,7 @@ import (
 var _ = Describe("EcrCredentials controller", func() {
 
 	const (
-		timeout   = time.Second * 2
+		timeout   = time.Second * 5
 		interval  = time.Second * 1
 		namespace = "default"
 	)
@@ -72,7 +72,7 @@ var _ = Describe("EcrCredentials controller", func() {
 					Namespace: namespace,
 				}, fetched)
 				return fetched.Status.Phase
-			}, timeout, interval).Should(Equal(registryv1alpha1.ECRCredentialsUnauthorized))
+			}, timeout, interval).Should(Equal(registryv1alpha1.ECRCredentialsError))
 		})
 
 		if os.Getenv("ENABLE_ALL_TESTS") == "true" {

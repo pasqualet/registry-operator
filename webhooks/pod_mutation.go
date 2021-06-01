@@ -49,6 +49,7 @@ func (w *MutatePodWebhook) Handle(ctx context.Context, req admission.Request) ad
 	for _, image := range images {
 		ecrSecrets, err := w.getSecretNamesForECRCredentials(image, pod.ObjectMeta.Namespace)
 		if err != nil {
+			log.Error(err, "Unable to get ecrSecrets")
 			return admission.Errored(http.StatusInternalServerError, err)
 		}
 		secretsToAdd = append(secretsToAdd, ecrSecrets...)
@@ -64,6 +65,7 @@ func (w *MutatePodWebhook) Handle(ctx context.Context, req admission.Request) ad
 	// Return the injected pod
 	marshalledPod, err := json.Marshal(pod)
 	if err != nil {
+		log.Error(err, "Unable to marshal Pod")
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
 

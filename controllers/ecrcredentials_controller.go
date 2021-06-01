@@ -106,7 +106,7 @@ func (r *ECRCredentialsReconciler) authenticate(log logr.Logger, ecrCredentials 
 	awsSession, err := r.getAwsSession(log, ecrCredentials)
 	if err != nil {
 		if err := r.setError(log, ecrCredentials, err); err != nil {
-			return ctrl.Result{}, err
+			return ctrl.Result{}, nil
 		}
 	}
 
@@ -151,6 +151,11 @@ func (r *ECRCredentialsReconciler) setError(log logr.Logger, ecrCredentials *reg
 			if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsError); err != nil {
 				return err
 			}
+		}
+	} else {
+		// Set Error status
+		if err := r.setStatus(log, ecrCredentials, registryv1alpha1.ECRCredentialsError); err != nil {
+			return err
 		}
 	}
 
