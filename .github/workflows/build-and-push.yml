@@ -7,6 +7,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - run: curl -s https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/install.sh | sh
+      - run: curl -s https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/install.sh | bash
       - run: make docker-build
-
+      - run: make docker-push
