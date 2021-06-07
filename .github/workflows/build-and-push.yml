@@ -3,10 +3,22 @@ name: build-and-push
 on: push
 
 jobs:
-  deploy:
+
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - run: curl -s https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/install.sh | bash
       - run: make docker-build
+
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: curl -s https://raw.githubusercontent.com/kubernetes-sigs/kubebuilder/master/scripts/install.sh | bash
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
       - run: make docker-push
