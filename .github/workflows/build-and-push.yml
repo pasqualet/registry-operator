@@ -1,12 +1,6 @@
 name: build-and-push
 
-on:
-  push:
-    branches:
-      - master
-    paths:
-      - '!mkdocs.yml'
-      - '!docs/**'
+on: push
 
 jobs:
   deploy:
