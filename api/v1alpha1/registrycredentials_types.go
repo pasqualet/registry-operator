@@ -23,7 +23,7 @@ import (
 // RegistryCredentialsSpec defines the desired state of RegistryCredentials
 type RegistryCredentialsSpec struct {
 	//+kubebuilder:validation:Required
-	Provider RegistryProvider `json:",inline"`
+	Provider RegistryProvider `json:"provider"`
 
 	// Foo is an example field of RegistryCredentials. Edit registrycredentials_types.go to remove/update
 	ImageSelector ImageSelector `json:"imageSelector,omitempty"`
@@ -45,7 +45,7 @@ type ImageSelector struct {
 
 type RegistryProvider struct {
 	//+kubebuilder:validation:Optional
-	AWSElasticContainerRegsitry *AWSElasticContainerRegistry `json:"awsElasticContainerRegistry,omitempty"`
+	AWSElasticContainerRegistry *AWSElasticContainerRegistry `json:"awsElasticContainerRegistry,omitempty"`
 }
 
 type AWSElasticContainerRegistry struct {
